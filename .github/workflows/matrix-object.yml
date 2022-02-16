@@ -1,4 +1,4 @@
-name: Dynamic Matrix (Simple)
+name: Dyanmic Matrix (Object)
 
 on:
   workflow_dispatch:
@@ -30,14 +30,14 @@ jobs:
         if: github.event.inputs.macOS == 'false'
         run: |
           echo 'MATRIX<<EOF' >> $GITHUB_ENV
-          echo '${{ env.MATRIX }}' | jq -c '. |= . + [{"os":"macos-latest"}]' >> $GITHUB_ENV
+          echo '${{ env.MATRIX }}' | jq -c '. |= . + [{"platform":{"os":"macos-11","name":"macOS"}}]' >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
 
       - name: Check Windows
         if: github.event.inputs.Windows == 'false'
         run: |
           echo 'MATRIX<<EOF' >> $GITHUB_ENV
-          echo '${{ env.MATRIX }}' | jq -c '. |= . + [{"os":"windows-latest"}]' >> $GITHUB_ENV
+          echo '${{ env.MATRIX }}' | jq -c '. |= . + [{"platform":{"os":"windows-2022","name":"Windows"}}]' >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
 
       - name: Debug Output
@@ -50,14 +50,17 @@ jobs:
 
     strategy:
       matrix:
-        os:
-          - macos-latest
-          - ubuntu-latest
-          - windows-latest
+        platform:
+          [
+            { "os": "ubuntu-latest", "name": "Ubuntu" },
+            { "os": "macos-11", "name": "macOS" },
+            { "os": "windows-2022", "name": "Windows" },
+          ]
 
         exclude: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
+    name: ${{ matrix.platform.name }}
     runs-on: ubuntu-20.04
 
     steps:
-      - run: echo ${{ matrix.os }}
+      - run: echo ${{ matrix.platform.os }} / ${{ matrix.platform.name }}
