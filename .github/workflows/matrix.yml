@@ -1,0 +1,63 @@
+on:
+  workflow_dispatch_test:
+    inputs:
+      macOS:
+        description: "Build macOS"
+        required: false
+        default: "true"
+        type: boolean
+
+      Windows:
+        description: "Build Windows"
+        required: false
+        default: "true"
+        type: boolean
+
+jobs:
+  prepare:
+    runs-on: ubuntu-20.04
+
+    env:
+      MATRIX: "[]"
+
+    outputs:
+      matrix: ${{ env.MATRIX }}
+
+    steps:
+      - name: Check macOS
+        if: github.event.inputs.macOS == 'false'
+        run: |
+          echo 'MATRIX<<EOF' >> $GITHUB_ENV
+          echo '${{ env.MATRIX }}' | jq -c '.platform |= . + [{"platform":{"os":"macos-11","name":"macOS"}}]' >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
+      - run: echo '::set-output name=matrix::${{ env.MATRIX }}'
+
+  package:
+    needs:
+      - prepare
+
+    strategy:
+      matrix:
+        platform:
+          [
+            { "os": "ubuntu-latest", "name": "Ubuntu" },
+            { "os": "macos-11", "name": "macOS" },
+            { "os": "windows-2022", "name": "Windows" },
+          ]
+
+        exclude: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+        # exclude:
+        #   [
+        #     { "platform": { "os": "macos-11", "name": "macOS" } },
+        #     { "platform": { "os": "windows-2022", "name": "Windows" } },
+        #   ]
+        # exclude: [{}]
+
+    name: ${{ matrix.platform.name }}
+    runs-on: ubuntu-20.04
+
+    steps:
+      - run: |
+          echo ${{ matrix.platform.os }} / ${{ matrix.platform.name }}
+          echo ${{ needs.prepare.outputs.matrix }}
