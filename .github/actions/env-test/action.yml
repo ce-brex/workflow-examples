@@ -1,0 +1,17 @@
+name: Environment Test
+description: Just testing if we can set enviroment variables.
+
+runs:
+  using: "composite"
+
+  steps:
+    - run: touch foo
+      shell: bash
+
+    - shell: bash
+      run: |
+        export FOO="bar"
+        touch package.json
+        echo "{\"name\":\"composite-action\"}" >> package.json
+        npm run env | grep FOO
+        echo "FOO=$FOO" >> $GITHUB_ENV
